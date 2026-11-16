@@ -22,6 +22,8 @@ import {
   profileFromBlocks,
   remotePathOf,
   remoteSuiteShellSpec,
+  sshHostOfSpec,
+  sshSelectionSpec,
   windowsPathToWsl,
   workspaceSshSpec,
   wslUncShellSpec,
@@ -219,6 +221,21 @@ check("workspaceSshSpec 普通目录返回 null", () => {
 	const plain = join(SSHDIR, "plain");
 	mkdirSync(plain, { recursive: true });
 	assert.equal(workspaceSshSpec(plain), null);
+});
+
+check("sshHostOfSpec 取 host 段", () => {
+	const spec = workspaceSshSpec(DIRECT, { ssh: "ssh.exe" });
+	assert.equal(sshHostOfSpec(spec), "192.168.81.77");
+	assert.equal(sshHostOfSpec({ kind: "ssh", args: ["-tt", "onlyhost"] }), "onlyhost");
+});
+
+check("sshSelectionSpec 选中工作区本机时保留 key 与远端目录", () => {
+	const spec = sshSelectionSpec(DIRECT, "192.168.81.77", { ssh: "ssh.exe" });
+	assert.ok(spec.args.includes("-i"));
+	assert.ok(spec.args.some((arg) => arg.includes('cd "$HOME"')));
+
+	const other = sshSelectionSpec(DIRECT, "10.0.0.9", { ssh: "ssh.exe" });
+	assert.deepEqual(other.args, ["-tt", "10.0.0.9"]);
 });
 
 check("windowsPathToWsl 换盘符路径", () => {
