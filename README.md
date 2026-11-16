@@ -4,7 +4,7 @@
 
 在 **DSH（DeepSeek Harness）** 页面里直接使用终端，不用切换到外部窗口。
 
-默认接入 **DSH 官方右侧栏**，无需安装 dsh-better-sidebar。
+接管 **DSH 官方右侧栏**的内置终端入口：开始页只保留一张「新建终端」卡片（图标与文案与内置终端一致），点开就是本插件的终端页签。
 
 > 第三方插件，非 DeepSeek 官方出品。
 
@@ -15,14 +15,14 @@ npm 包名 `@lylgj/dsh-terminal`，源码在 [Lylgj/dsh-terminal](https://github
 
 ## 功能
 
-- **自动识别环境**：Windows 本地使用 cmd，WSL 工作区使用对应发行版的 bash，Docker 工作区直接 `docker exec -it` 进容器，远程工作区连接 SSH，macOS/Linux 使用登录 shell。
+- **自动识别环境**：Windows 本地使用 cmd，WSL 工作区使用对应发行版的 bash，Docker 工作区直接 `docker exec -it` 进容器，远程工作区连接 SSH，macOS/Linux 使用登录 shell。SSH 工作区同时识别 `@zhangfengshun/dsh-remote-ssh` 的 `.remote-ssh.json` 与 `@lylgj/dsh-remote-suite` 的 `.dsh-remote.json` 标记（后者按 `~/.ssh/config` 里的主机参数连接）。
 - **手动切换终端**：支持 cmd、PowerShell、pwsh、WSL、运行中的 Docker 容器和 SSH，选择按工作区记住。
 - **工作区独立运行**：切换会话或收起侧栏时，原终端继续在后台运行；同一工作区复用终端。
 - **复制与粘贴**：可设置 Ctrl+C 复制、选中即复制、右键粘贴。
 - **常用操作**：浅色/暗色主题、清屏、重连、后台终端管理。
 - **每个环境最多 10 个终端**：本机、各 WSL 发行版、各 Docker 容器、各 SSH 主机分别计数。
 
-官方侧栏不可用时，自动兼容 dsh-better-sidebar 页签；两者都没有时使用独立面板。
+官方侧栏服务不可用时（非 DSH 0.2.2+ 的旧环境），回退到独立浮层终端面板。
 
 ## 界面
 
@@ -79,7 +79,7 @@ dsh plugin --profile desktop add "D:\你的路径\dsh-terminal"
 
 ## 使用
 
-1. 在右侧栏开始页点击 **「终端」**。
+1. 在右侧栏开始页点击 **「新建终端」**（内置终端入口已被本插件接管，外观与原卡片一致）。
 2. 插件按当前工作区选择环境，也可通过工具条下拉菜单切换 shell。
 3. 点击终端数量徽标，管理当前环境的后台终端。
 
@@ -98,7 +98,7 @@ dsh plugin --profile desktop remove @lylgj/dsh-terminal
 
 从 GitHub 装的则用 `remove dsh-terminal`。
 
-完成后重新打开 DSH。卸载不影响 DSH 内置终端或 dsh-better-sidebar。
+完成后重新打开 DSH。卸载后开始页恢复 DSH 内置终端入口（内置终端不受影响）。
 
 ## 许可
 

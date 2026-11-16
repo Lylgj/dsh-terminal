@@ -2,7 +2,7 @@
 	"name": "@lylgj/dsh-terminal",
 	"version": "0.1.1",
 	"type": "module",
-	"description": "DSH Web 终端插件：默认接入 DSH 官方右侧栏（终端页签 + 开始页入口），也可作为 dsh-better-sidebar 页签或独立浮层面板运行；宿主半边提供同源 PTY WebSocket，支持 cmd / PowerShell / WSL / SSH。",
+	"description": "DSH Web 终端插件：接管 DSH 官方右侧栏的内置终端入口（开始页「新建终端」卡片 + 终端页签），宿主半边提供同源 PTY WebSocket，支持 cmd / PowerShell / WSL / Docker / SSH；没有官方侧栏时回退到独立浮层面板。",
 	"license": "MIT",
 	"publishConfig": {
 		"access": "public"
@@ -35,8 +35,7 @@
 		"xterm",
 		"node-pty",
 		"web-terminal",
-		"sidebar-right",
-		"better-sidebar"
+		"sidebar-right"
 	],
 	"engines": {
 		"node": ">=20",
@@ -68,10 +67,10 @@
 		"THIRD-PARTY-NOTICES.md"
 	],
 	"scripts": {
-		"test": "node tests/terminal-behavior.mjs && node tests/better-sidebar-integration.mjs && node tests/official-sidebar-integration.mjs",
+		"test": "node tests/terminal-behavior.mjs && node tests/official-sidebar-integration.mjs && node tests/remote-suite-workspace.mjs",
 		"test:behavior": "node tests/terminal-behavior.mjs",
-		"test:sidebar": "node tests/better-sidebar-integration.mjs",
 		"test:official": "node tests/official-sidebar-integration.mjs",
+		"test:remote": "node tests/remote-suite-workspace.mjs",
 		"test:pty": "node tests/terminal-pty.mjs",
 		"test:pager": "node tests/terminal-pager.mjs"
 	},
