@@ -1,105 +1,96 @@
 # dsh-terminal
 
-<p align="center"><img src="docs/assets/banner.png" alt="dsh-terminal" width="100%"></p>
+简体中文 | [English](./README.en.md)
 
-在 **DSH（DeepSeek Harness）** 页面里直接使用终端，不用切换到外部窗口。
+> **终端就在对话旁边：本机、WSL、Docker、SSH，按工作区切换。**
 
-接管 **DSH 官方右侧栏**的内置终端入口：开始页只保留一张「新建终端」卡片（图标与文案与内置终端一致），点开就是本插件的终端页签。
+[![npm](https://img.shields.io/npm/v/@lylgj/dsh-terminal?style=flat-square)](https://www.npmjs.com/package/@lylgj/dsh-terminal)
+[![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](./LICENSE)
 
-> 第三方插件，非 DeepSeek 官方出品。
+<img src="docs/assets/banner.png" alt="dsh-terminal 终端面板" width="100%">
 
-[![npm](https://img.shields.io/npm/v/@lylgj/dsh-terminal?color=ca9ee6)](https://www.npmjs.com/package/@lylgj/dsh-terminal)
-[![license](https://img.shields.io/npm/l/@lylgj/dsh-terminal?color=81c8be)](LICENSE)
+DeepSeek Harness 的终端插件。在右侧栏点击 **新建终端**，即可在当前工作区运行命令，无需切换到外部终端窗口。
 
-npm 包名 `@lylgj/dsh-terminal`，源码在 [Lylgj/dsh-terminal](https://github.com/Lylgj/dsh-terminal)。
+## 界面预览
+
+<img src="docs/assets/screenshots/terminal.png" alt="右侧栏终端：环境选择、主题、复制、清屏和重连" width="62%">
 
 ## 功能
 
-- **自动识别环境**：Windows 本地使用 cmd，WSL 工作区使用对应发行版的 bash，Docker 工作区直接 `docker exec -it` 进容器，远程工作区连接 SSH，macOS/Linux 使用登录 shell。SSH 工作区同时识别 `@zhangfengshun/dsh-remote-ssh` 的 `.remote-ssh.json` 与 `@lylgj/dsh-remote-suite` 的 `.dsh-remote.json` 标记（后者按 `~/.ssh/config` 里的主机参数连接）。
-- **手动切换终端**：支持 cmd、PowerShell、pwsh、WSL、运行中的 Docker 容器和 SSH，选择按工作区记住。
-- **工作区独立运行**：切换会话或收起侧栏时，原终端继续在后台运行；同一工作区复用终端。
-- **复制与粘贴**：可设置 Ctrl+C 复制、选中即复制、右键粘贴。
-- **常用操作**：浅色/暗色主题、清屏、重连、后台终端管理。
-- **每个环境最多 10 个终端**：本机、各 WSL 发行版、各 Docker 容器、各 SSH 主机分别计数。
-
-官方侧栏服务不可用时（非 DSH 0.2.2+ 的旧环境），回退到独立浮层终端面板。
-
-## 界面
-
-<p><img src="docs/assets/screenshots/terminal.png" alt="右侧栏里的终端" width="46%"></p>
-
-右侧栏的「终端」页签：左上显示已连接的工作区，中间下拉切换 shell（这里是 `Windows: cmd`），右侧是浅色 / 复制 / 清屏 / 重连，「后台终端」是当前环境里还开着的终端数量。
+- **自动选择环境**：Windows 本机工作区使用 cmd，WSL 工作区进入对应发行版，Docker 工作区进入容器，SSH 工作区连接远程主机；macOS / Linux 使用登录 shell。
+- **手动切换 shell**：支持 cmd、PowerShell、pwsh、WSL、运行中的 Docker 容器和 SSH，选择按工作区记住。
+- **后台终端**：切换会话或收起侧栏时继续运行；同一工作区可复用终端，通过数量徽标管理后台终端。
+- **复制与粘贴**：可配置 Ctrl+C 复制、选中即复制、右键粘贴。
+- **常用操作**：浅色 / 暗色主题、清屏、重连，以及后台终端管理。
 
 ## 安装
 
-需要 DSH **0.2.2-rc.1 或更新版本**、Node.js **20 或更新版本**，并能够访问 GitHub。
+要求：DSH **0.2.2-rc.1 或更新版本**、Node.js **20 或更新版本**。WSL、Docker、SSH 功能还需本机具备相应运行环境或客户端。
 
-插件的 npm 包名是 `@lylgj/dsh-terminal`；下面两种装法都是让 DSH 从 npm 源拉取它。装插件要走 DSH 自己的流程（界面或 `dsh plugin`），直接 `npm install` 不会被识别成插件。
+### DSH 桌面版
 
-**在界面里装（推荐）**
+在应用内打开 **插件 → 添加插件**，输入：
 
-左侧栏 →「插件」→「添加插件」，在「包名或地址」里填：
-
-```
+```text
 @lylgj/dsh-terminal
 ```
 
-点「安装」，装完重启 DSH。插件带原生依赖 `node-pty`，DSH 会问是否允许运行构建脚本，选**允许**即可——它只是把预编译好的二进制放到位，不需要本机装编译器。
+若询问是否允许 `node-pty` 的构建脚本，请在确认包来源后允许。它用于准备终端所需的原生组件；支持的平台通常可使用预编译文件，其他平台可能需要本机构建工具。
 
-**用命令行装**
+安装完成后完全退出并重新打开 DSH。
 
-先退出 DSH，在 profile 的 `pnpm-workspace.yaml` 里加上下面这段（`node-pty` 需要构建脚本，否则 pnpm 会拦下并报 `ERR_PNPM_IGNORED_BUILDS`）：
+### dsh web / 自定义 profile
+
+若使用的 pnpm 要求显式批准依赖脚本，先在对应 profile 的 `pnpm-workspace.yaml` 中合并以下配置，保留已有条目：
 
 ```yaml
 allowBuilds:
   node-pty: true
 ```
 
-再运行：
+通过 CLI 安装，然后重启对应 DSH 实例：
 
-```bash
-dsh plugin --profile desktop add @lylgj/dsh-terminal
+```sh
+dsh plugin --profile web add @lylgj/dsh-terminal
 ```
 
-如果 npm 源不通，也可以直接从仓库装（内容相同，但插件页不会显示版本更新）：
+使用自定义 profile 时，将 `web` 换成实际 profile 名称。
 
-```bash
-dsh plugin --profile desktop add github:Lylgj/dsh-terminal
-```
+## 快速开始
 
-使用 `dsh web` 时，将 `desktop` 改为对应的 profile 名称（默认 `web`）。安装完成后重新打开 DSH，无需手动修改配置。
+1. 打开右侧栏，在开始页点击 **新建终端**。
+2. 插件按当前工作区选择环境；需要其他 shell 时，通过工具条下拉菜单切换。
+3. 直接输入命令。点击终端数量徽标，可查看和管理后台终端。
 
-**从源码装（自己改代码时）**
+## 注意
 
-```bash
-dsh plugin --profile desktop add "D:\你的路径\dsh-terminal"
-```
+- 打开终端前，先确认远程目标可正常连接。Docker 容器需要处于运行状态；SSH 需要可用的本机 SSH 客户端、配置和认证。
+- 仅收起侧栏或切换会话不会结束终端；关闭终端页签或在后台终端列表中关闭终端，会结束对应 shell。
+- 切换 shell、点击 **重连** 或断线后自动重连都会新建 shell，不会恢复原来的运行任务。重连时当前页面的已有输出仍在，但刷新页面会丢失滚动记录并重建终端。长任务请使用目标环境中的 tmux 等会话管理工具。
+- 开启 Ctrl+C 复制后，有选区时复制，没有选区时仍用于中断命令。
+- 命令在所选目标上执行，请确认工作区和 shell 后再操作。
+- 不要将本地终端服务直接暴露到公网。
 
-本地目录必须写绝对路径；这样装进去的是目录副本，改完源码要重新安装一次再重启。
+## 常见问题
 
-## 使用
+**安装后没有终端入口或提示原生组件加载失败？** 先完全退出并重新打开 DSH。若错误指向 `node-pty`，确认已批准其构建脚本，再通过原安装方式重新安装；需要本机构建的平台还需准备构建工具。
 
-1. 在右侧栏开始页点击 **「新建终端」**（内置终端入口已被本插件接管，外观与原卡片一致）。
-2. 插件按当前工作区选择环境，也可通过工具条下拉菜单切换 shell。
-3. 点击终端数量徽标，管理当前环境的后台终端。
+**终端一直连接失败？** 先确认所选 shell 已安装，WSL 发行版或 Docker 容器可用，SSH 能通过本机客户端正常登录。连接断开后会约每 3 秒自动重试，也可点击 **重连**；这会启动新 shell，而非恢复旧任务。
 
-**注意：**
-
-- 切换 shell 或关闭终端页签会结束对应的 shell；仅收起侧栏不会。
-- 刷新页面会重建终端，运行中的命令与滚动记录不会保留。
-- 启用 Ctrl+C 复制后，仅在选中文字时复制；未选中时仍用于中断命令。
-- 仅供本机使用，不要将终端服务暴露到公网。
+**提示终端数量已达上限？** 点击终端数量徽标，关闭不再使用的后台终端，再打开新终端。仅收起侧栏不会释放终端。
 
 ## 卸载
 
-```bash
-dsh plugin --profile desktop remove @lylgj/dsh-terminal
+在 DSH 桌面版的 **插件** 页面找到本插件，选择 **卸载**，然后完全退出并重新打开 DSH。
+
+使用 CLI 时，在安装插件的同一个 profile 中执行：
+
+```sh
+dsh plugin --profile web remove @lylgj/dsh-terminal
 ```
 
-从 GitHub 装的则用 `remove dsh-terminal`。
-
-完成后重新打开 DSH。卸载后开始页恢复 DSH 内置终端入口（内置终端不受影响）。
+将 `web` 换成实际 profile 名称，然后重启对应 DSH 实例。
 
 ## 许可
 
-[MIT](<LICENSE>)。第三方组件说明见 [THIRD-PARTY-NOTICES.md](<THIRD-PARTY-NOTICES.md>)。
+[MIT](./LICENSE)。第三方组件说明见 [第三方声明](./THIRD-PARTY-NOTICES.md)。

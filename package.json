@@ -63,6 +63,7 @@
 		"icon.svg",
 		"screenshots.json",
 		"README.md",
+		"README.en.md",
 		"LICENSE",
 		"THIRD-PARTY-NOTICES.md"
 	],
