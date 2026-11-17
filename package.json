@@ -1,6 +1,6 @@
 {
 	"name": "@lylgj/dsh-terminal",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"type": "module",
 	"description": "DSH Web 终端插件：接管 DSH 官方右侧栏的内置终端入口（开始页「新建终端」卡片 + 终端页签），宿主半边提供同源 PTY WebSocket，支持 cmd / PowerShell / WSL / Docker / SSH；没有官方侧栏时回退到独立浮层面板。",
 	"license": "MIT",
