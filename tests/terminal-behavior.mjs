@@ -200,7 +200,9 @@ globalThis.Terminal = class {
 	hasSelection() { return this.selection !== ""; }
 	paste(text) { this.pasted += text; }
 	write(t) { this.written.push(t); }
-	clear() {}
+	clear() { this.cleared = (this.cleared ?? 0) + 1; }
+	scrollToBottom() {}
+	refresh() {}
 	focus() {}
 	dispose() { this.disposed = true; }
 };
@@ -627,6 +629,35 @@ check(
 );
 check("右键仍然被拦截", prevented2 === true);
 check("位置已持久化", storedClip().toastPos === "cursor", JSON.stringify(storedClip()));
+
+// === 场景 14：清屏要连同排队中的旧输出一起丢掉 ===
+// xterm 的写入是排队处理的：只调 clear() 时，排在队列里的旧输出随后照常刷出来，
+// 看起来就是“清屏之后内容又回来了”。
+console.log("\n场景 14：清屏丢掉排队中的旧输出");
+const clearTerm = terms.at(-1);
+const clearSocket = sockets.at(-1);
+clearTerm.written.length = 0;
+clearTerm.cleared = 0;
+// 推一段输出进合批队列，紧接着点「清屏」，不等它刷出来
+clearSocket.onmessage?.({ data: "OLD-OUTPUT\r\n" });
+headerBtn("清屏").__props.onClick();
+await settle();
+check("清屏调用了 clear()", clearTerm.cleared === 1, String(clearTerm.cleared));
+check(
+	"清屏写了擦除序列（连滚动缓冲一起清）",
+	clearTerm.written.join("").includes("\x1b[3J\x1b[2J\x1b[H"),
+	JSON.stringify(clearTerm.written.join("").slice(0, 40)),
+);
+check(
+	"排队中的旧输出没有再刷出来",
+	!clearTerm.written.join("").includes("OLD-OUTPUT"),
+	JSON.stringify(clearTerm.written.join("").slice(0, 60)),
+);
+// 清屏之后新到的输出照常显示
+clearTerm.written.length = 0;
+clearSocket.onmessage?.({ data: "NEW-OUTPUT\r\n" });
+await new Promise((r) => setTimeout(r, 60));
+check("清屏之后的新输出正常写入", clearTerm.written.join("").includes("NEW-OUTPUT"), JSON.stringify(clearTerm.written.join("")));
 
 console.log(`\n结果：通过 ${pass}，失败 ${fail}`);
 process.exit(fail === 0 ? 0 : 1);
