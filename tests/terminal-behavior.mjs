@@ -199,7 +199,7 @@ globalThis.Terminal = class {
 	getSelection() { return this.selection; }
 	hasSelection() { return this.selection !== ""; }
 	paste(text) { this.pasted += text; }
-	write(t) { this.written.push(t); }
+	write(t, cb) { this.written.push(t); if (typeof cb === "function") cb(); }
 	clear() { this.cleared = (this.cleared ?? 0) + 1; }
 	scrollToBottom() {}
 	refresh() {}
@@ -499,7 +499,9 @@ console.log("\n场景 12：终端复制/粘贴开关（三个独立开关，可�
 const hostEls = () => allEls.filter((e) => e.className === "dsh-term-host");
 /** 设置面板里的某个复选框（按文案找）。 */
 const optBox = (text) =>
-	((allEls.filter((e) => e.className === "dsh-term-opt" && (e.__kids ?? []).includes(text)).at(-1)?.__kids) ?? []).find(
+	((allEls
+		.filter((e) => e.className === "dsh-term-chip" && (e.__kids ?? []).some((k) => k instanceof El && (k.__kids ?? []).includes(text)))
+		.at(-1)?.__kids) ?? []).find(
 		(k) => k instanceof El && k.tagName === "INPUT"
 	);
 /** 读回持久化的开关。 */
@@ -543,7 +545,7 @@ check("右键内容交给 term.paste（保持括号粘贴语义）", term0.paste
 // ⑤ 打开设置面板，关掉右键粘贴
 headerBtn("复制").__props.onClick();
 await settle();
-check("设置面板出现三个开关", allEls.filter((e) => e.className === "dsh-term-opt").length >= 3, String(allEls.filter((e) => e.className === "dsh-term-opt").length));
+check("设置面板出现三个开关", allEls.filter((e) => e.className === "dsh-term-chip").length >= 3, String(allEls.filter((e) => e.className === "dsh-term-chip").length));
 optBox("右键粘贴").__props.onChange();
 await settle();
 check("开关已持久化", storedClip().rightPaste === false, JSON.stringify(storedClip()));
@@ -642,11 +644,16 @@ clearTerm.cleared = 0;
 clearSocket.onmessage?.({ data: "OLD-OUTPUT\r\n" });
 headerBtn("清屏").__props.onClick();
 await settle();
-check("清屏调用了 clear()", clearTerm.cleared === 1, String(clearTerm.cleared));
+check("清屏调用了 clear()", clearTerm.cleared >= 1, String(clearTerm.cleared));
 check(
-	"清屏写了擦除序列（连滚动缓冲一起清）",
-	clearTerm.written.join("").includes("\x1b[3J\x1b[2J\x1b[H"),
+	"清屏不再用擦除序列（保住提示符那一行）",
+	!clearTerm.written.join("").includes("\x1b[3J"),
 	JSON.stringify(clearTerm.written.join("").slice(0, 40)),
+);
+check(
+	"清屏用空写入当水位线，排空后再清一次",
+	clearTerm.written.includes("") && clearTerm.cleared === 2,
+	JSON.stringify({ written: clearTerm.written, cleared: clearTerm.cleared }),
 );
 check(
 	"排队中的旧输出没有再刷出来",
