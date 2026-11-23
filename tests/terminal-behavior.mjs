@@ -443,57 +443,40 @@ for (let i = 0; i < 15; i++) await Promise.resolve();
 check("展开后重新让位", T.frameMargin() === "460px", JSON.stringify(T.frameMargin()));
 check("全程没有关闭任何 WS", sockets.every((x) => !x.closed));
 
-// === 场景 10：明暗主题切换 ===
-console.log("\n场景 10：明暗主题切换");
+// === 场景 10：主题跟随宿主（不再有手动开关） ===
+console.log("\n场景 10：主题跟随宿主");
 const panelNow = () => allEls.filter((e) => e.className === "dsh-term-panel").at(-1);
 const tabNow = () => allEls.filter((e) => e.className === "dsh-term-tab").at(-1);
-const themeBtn = (label) => allEls.filter((e) => e.tagName === "BUTTON" && (e.__kids ?? []).includes(label)).at(-1);
+const headerBtn = (label) => allEls.filter((e) => e.tagName === "BUTTON" && (e.__kids ?? []).includes(label)).at(-1);
 
-check("默认调色板为浅色", terms[0]?.options?.theme?.background === "#ffffff", String(terms[0]?.options?.theme?.background));
+check("默认调色板为浅色（宿主为浅色）", terms[0]?.options?.theme?.background === "#ffffff", String(terms[0]?.options?.theme?.background));
 check("面板 data-theme=light", panelNow()?.["data-theme"] === "light", String(panelNow()?.["data-theme"]));
-check("头部有「浅色」按钮", themeBtn("浅色") !== undefined);
+check("头部没有「浅色/暗色」开关", headerBtn("浅色") === undefined && headerBtn("暗色") === undefined);
+check("没有把主题写进 localStorage", globalThis.localStorage.getItem("dsh.terminal.theme") === null, String(globalThis.localStorage.getItem("dsh.terminal.theme")));
 
-// 悬浮按钮只在收起时渲染，所以先收起
+// 悬浮按钮只在收起时渲染，所以先收起；它也跟随宿主主题，且没有开关按钮
 T.close();
 await settle();
 check("收起后悬浮按钮为浅色", tabNow()?.["data-theme"] === "light", String(tabNow()?.["data-theme"]));
+check("悬浮按钮也没有主题开关", headerBtn("浅色") === undefined && headerBtn("暗色") === undefined);
 T.open();
 await settle();
 
-// 真实点击头部按钮切到暗色
-themeBtn("浅色").__props.onClick();
-await settle();
-check("切到暗色", globalThis.__DSH_TERMINAL__.theme() === "dark", globalThis.__DSH_TERMINAL__.theme());
-check("两个常驻终端同时换成暗色调色板",
-  terms.length === 2 && terms.every((t) => t.options.theme?.background === "#1b1b25"),
-  terms.map((t) => t.options.theme?.background).join(","));
-check("暗色前景为 #cdd6f4", terms[0]?.options?.theme?.foreground === "#cdd6f4", String(terms[0]?.options?.theme?.foreground));
-check("面板 data-theme=dark", panelNow()?.["data-theme"] === "dark", String(panelNow()?.["data-theme"]));
-check("按钮文案变为「暗色」", themeBtn("暗色") !== undefined);
-check("主题写入 localStorage", globalThis.localStorage.getItem("dsh.terminal.theme") === "dark", String(globalThis.localStorage.getItem("dsh.terminal.theme")));
-check("换主题没有重建终端", sockets.length === 2 && terms.length === 2 && sockets.every((x) => !x.closed), "sockets=" + sockets.length + " terms=" + terms.length);
-
-T.close();
-await settle();
-check("收起后悬浮按钮变为暗色", tabNow()?.["data-theme"] === "dark", String(tabNow()?.["data-theme"]));
-T.open();
-await settle();
-
-// 换主题后新开工作区：新终端应以当前主题创建（验证 themeRef）
+// 换工作区新建的终端：仍按当前（宿主）主题创建
 store.current = "s3";
 await settle();
 check("新工作区新建了终端（共 3）", terms.length === 3, "实际 " + terms.length);
-check("新终端按当前主题创建（暗色）", terms.at(-1)?.options?.theme?.background === "#1b1b25", String(terms.at(-1)?.options?.theme?.background));
+check("新终端按当前主题创建（浅色）", terms.at(-1)?.options?.theme?.background === "#ffffff", String(terms.at(-1)?.options?.theme?.background));
+check("主题全程没有关闭任何 WS", sockets.every((x) => !x.closed));
 
-// 点回去，三个终端一起变浅
-themeBtn("暗色").__props.onClick();
-await settle();
-check("切回浅色", globalThis.__DSH_TERMINAL__.theme() === "light", globalThis.__DSH_TERMINAL__.theme());
-check("三个终端全部回到浅色调色板",
-  terms.length === 3 && terms.every((t) => t.options.theme?.background === "#ffffff"),
-  terms.map((t) => t.options.theme?.background).join(","));
-check("面板 data-theme=light（回到浅色）", panelNow()?.["data-theme"] === "light", String(panelNow()?.["data-theme"]));
-check("主题切换全程没有关闭任何 WS", sockets.every((x) => !x.closed));
+// 源码层面确认机制：跟随宿主、无持久化键、无手动开关
+const { readFileSync: readSource } = await import("node:fs");
+const clientSource = readSource(new URL("../lib/client.js", import.meta.url), "utf8");
+check("跟随宿主：源码含 watchHostTheme(", clientSource.includes("watchHostTheme("));
+check("跟随宿主：readTheme 由 hostIsDark 决定", clientSource.includes("return hostIsDark() ? THEME_DARK_NAME : THEME_LIGHT_NAME;"));
+check("不再持久化主题键", clientSource.includes("dsh.terminal.theme") === false);
+check("不再有手动开关", clientSource.includes("themeButton") === false && clientSource.includes("toggleTheme") === false);
+check("按容器背景色取调色板", clientSource.includes("function paletteFor(") && clientSource.includes("function terminalPalette("));
 
 console.log("\n场景 11：终端后端选择（优先独立进程，不可达时回退同源）");
 check("默认优先连独立终端进程 :3110", sockets[0]?.url.includes(":3110/ws"), String(sockets[0]?.url));
@@ -556,7 +539,7 @@ check("右键被拦截（不再弹浏览器菜单）", prevented === true);
 check("右键内容交给 term.paste（保持括号粘贴语义）", term0.pasted === "echo hi\r", JSON.stringify(term0.pasted));
 
 // ⑤ 打开设置面板，关掉右键粘贴
-themeBtn("复制").__props.onClick();
+headerBtn("复制").__props.onClick();
 await settle();
 check("设置面板出现三个开关", allEls.filter((e) => e.className === "dsh-term-opt").length >= 3, String(allEls.filter((e) => e.className === "dsh-term-opt").length));
 optBox("右键粘贴").__props.onChange();

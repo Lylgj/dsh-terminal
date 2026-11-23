@@ -117,7 +117,7 @@ Copy-on-select writes the clipboard 150 ms after you release the mouse, so dragg
 
 ### Theme, clear, reconnect
 
-Two terminal palettes, light and dark, toggled from the toolbar; light is the default and the choice is stored in browser storage. **Clear** affects only the current workspace's terminal view and leaves other background terminals alone. **Reconnect** rebuilds the connection to the backend, which therefore starts a new shell: output already on screen stays, but running tasks do not resume; automatic reconnection after a drop behaves the same.
+Two terminal palettes, light and dark, that **follow the DSH interface theme**: switch DSH to dark and the terminal turns dark-on-light automatically, switch back and it returns to dark text on white. There is no manual toggle and nothing is written to browser storage. The palette is picked from the actual background colour of the container holding the terminal, so it matches wherever the panel is mounted. **Clear** affects only the current workspace's terminal view and leaves other background terminals alone. **Reconnect** rebuilds the connection to the backend, which therefore starts a new shell: output already on screen stays, but running tasks do not resume; automatic reconnection after a drop behaves the same.
 
 ## Configuration
 
@@ -125,7 +125,7 @@ Two terminal palettes, light and dark, toggled from the toolbar; light is the de
 |---|---|---|
 | Panel width | `460` | Drag the left edge, 280–1100 px; stored as `dsh.terminal.width` |
 | Layout | Side by side | `dock` / `overlay`; stored as `dsh.terminal.mode` |
-| Theme | Light | `light` / `dark`; stored as `dsh.terminal.theme` |
+| Theme | Follows DSH | Switches with the interface theme; nothing persisted |
 | Ctrl+C copy | On | Copies with a selection, otherwise still sends ^C |
 | Right-click paste | On | Reading the clipboard requires localhost or HTTPS |
 | Copy on select | Off | Fires 150 ms after the mouse is released |
@@ -159,7 +159,7 @@ Interface options apply immediately; environment variables are read when DSH sta
 - Each environment allows 10 terminals, and the service process allows 12 PTYs in total.
 - The Windows desktop build uses the same-origin backend by default, so keystroke echo shares the main process event loop and may slow down while it is loaded.
 - When the target directory inside a container does not exist, the shell falls back to the home directory; containers must be running, and SSH needs a working local client and authentication.
-- The theme only changes terminal colors, not the DSH interface theme.
+- The theme follows the DSH interface theme; it is not a separate terminal-only setting.
 
 ## Security
 
